@@ -96,10 +96,12 @@ namespace NLog
             }
 
             IList<Filter> prevFilterChain = null;
+            FilterResult? prevDefaultResult = null;
+
             FilterResult prevFilterResult = FilterResult.Neutral;
             for (var t = targets; t != null; t = t.NextInChain)
             {
-                FilterResult result = ReferenceEquals(prevFilterChain, t.FilterChain) ?
+                FilterResult result = ReferenceEquals(prevFilterChain, t.FilterChain) && Equals(prevDefaultResult, t.DefaultResult) ?
                     prevFilterResult : GetFilterResult(t.FilterChain, logEvent, t.DefaultResult);
                 if (!WriteToTargetWithFilterChain(t.Target, result, logEvent, exceptionHandler))
                 {
@@ -107,6 +109,7 @@ namespace NLog
                 }
 
                 prevFilterResult = result;  // Cache the result, and reuse it for the next target, if it comes from the same logging-rule
+                prevDefaultResult = t.DefaultResult;
                 prevFilterChain = t.FilterChain;
             }
         }

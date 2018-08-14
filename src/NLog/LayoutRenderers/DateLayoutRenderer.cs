@@ -45,7 +45,7 @@ namespace NLog.LayoutRenderers
     [LayoutRenderer("date")]
     [ThreadAgnostic]
     [ThreadSafe]
-    public class DateLayoutRenderer : LayoutRenderer
+    public class DateLayoutRenderer : LayoutRenderer, IRawValue
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DateLayoutRenderer" /> class.
@@ -101,11 +101,7 @@ namespace NLog.LayoutRenderers
         {
             var formatProvider = GetFormatProvider(logEvent, Culture);
 
-            var timestamp = logEvent.TimeStamp;
-            if (UniversalTime)
-            {
-                timestamp = timestamp.ToUniversalTime();
-            }
+            DateTime timestamp = GetDate(logEvent);
 
             var cachedDateFormatted = _cachedDateFormatted;
             if (!ReferenceEquals(formatProvider, CultureInfo.InvariantCulture) || cachedDateFormatted.Date == DateTime.MinValue)
@@ -128,6 +124,23 @@ namespace NLog.LayoutRenderers
             }
             builder.Append(formatTime);
         }
+
+        private DateTime GetDate(LogEventInfo logEvent)
+        {
+            var timestamp = logEvent.TimeStamp;
+            if (UniversalTime)
+            {
+                timestamp = timestamp.ToUniversalTime();
+            }
+
+            return timestamp;
+        }
+
+        /// <summary>
+        /// Get the raw value.
+        /// </summary>
+        /// <returns></returns>
+        object IRawValue.GetRawValue(LogEventInfo logEventInfo) => GetDate(logEventInfo);
 
         private static bool IsLowTimeResolutionLayout(string dateTimeFormat)
         {
